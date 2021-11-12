@@ -24,7 +24,6 @@
 #define LED_PIN_OUT         A2
 #define MICRO_READ_PIN      A7
 
-#define BUZZER_OUT        A6
 
 
 //OUTPUT ROW AND COLOUM NUMBER
@@ -107,14 +106,14 @@ int turn_value1 = 543;
 int turn_value2 = 475;
 
 int motor_offset[4] = {0,0,-4,-5};
-int motor_offset_A[4] = {-4,0,-4,0};
+int motor_offset_A[4] = {0,-2,0,-2};
 /******************************************************************/
 bool LED_STA = 0;
 
 
 void setup() {
   // put your setup code here, to run once:
-
+  noInterrupts();
   //pin init
   pinMode(ECD_READ_CLOCK,INPUT_PULLUP);
   pinMode(NEXT_TASK_SELECT,INPUT_PULLUP);
@@ -127,11 +126,10 @@ void setup() {
   pinMode(d7,OUTPUT);
 
   pinMode(LED_PIN_OUT,OUTPUT);
-
-  pinMode(BUZZER_OUT,OUTPUT);
   
   //pinMode(ECD_IN,INPUT);
-  pinMode(encoder0PinB,INPUT);
+  pinMode(encoder0PinB,INPUT_PULLUP);
+  
   pinMode(MICRO_READ_PIN,INPUT);
   
   pinMode(TASK_SEL_BOTTON,INPUT_PULLUP);
@@ -139,34 +137,36 @@ void setup() {
   pinMode(Direction_BUTTON,INPUT_PULLUP);
   
   lcd.begin(16,2);
-
-  attachInterrupt(digitalPinToInterrupt(ECD_READ_CLOCK),ECD_READ,CHANGE);
+  lcd.setCursor(0,0);
+  lcd.print("Wait Task select");
+  attachInterrupt(digitalPinToInterrupt(ECD_READ_CLOCK),ECD_READ,RISING);
   attachInterrupt(digitalPinToInterrupt(NEXT_TASK_SELECT),task_change,FALLING);
 
   Serial.begin(9600);
-  buzzer_board.begin(9600);
+  buzzer_board.begin(19200);
   
   Wire.begin();
+
+  interrupts();
   
 }
 
 void loop() {
-  /*
   lcd.setCursor(0,0);
   lcd.print("Wait Task select");
-  while(analogRead(MICRO_READ_PIN) < 400)
+  int tmp;
+  /*
+  while((tmp = analogRead(MICRO_READ_PIN)) < 500)
   {
+    Serial.print(tmp);
+    Serial.print('\n');
+    delay(100);
     continue;
-  }
+  }*/
+ 
   task_select();
-  can_change_task = false;*/
+  can_change_task = false;
 
-
-  car_task.num = 2;
-  car_task.dir = 1;
-  car_task.speed_set = 60;
-  car_task.target = 1;
-  car_task.sta = 1;
 
   B1_2_B2();
   
@@ -174,31 +174,20 @@ void loop() {
   
   if(car_task.num == 0)
   {
-    tone(BUZZER_OUT,TASKA_FREQ,10000);
     task_A_mission();
   }
   else if(car_task.num == 1)
   {
-    tone(BUZZER_OUT,TASKB_FREQ,10000);
     task_B_mission();
   }
   else if(car_task.num == 2)
   {
-    tone(BUZZER_OUT,TASKC_FREQ,10000);
     task_C_mission();
   }
-  noTone(BUZZER_OUT);
   while(1)
   {
   }
   
-  
-  while(can_change_task == false)
-  {
-    continue;
-    tone(BUZZER_OUT,TASKA_FREQ,200);
-  }
-    
 }
 
 inline void LCD_task_Init(void)
@@ -265,33 +254,36 @@ void task_select(void)
     delay(100);
   }
   Serial.print("task");
-  
+  Serial.print(car_task.num);
+
+  delay(500);
   can_change_task = false;
   
   while(can_change_task == false)
   {
     car_task.dir = digitalRead(Direction_BUTTON);
     LCD_task_direction();
-    Serial.print(encoderPos);
   }
+  Serial.print("\ndirect");
+  Serial.print(car_task.dir);
+  delay(500);
+  //encoderPos = 0;
   can_change_task = false;
-  Serial.print("direct");
-
-  encoderPos = 0;
   
   while(can_change_task == false)
   {
     car_task.speed_set = encoder_out + 50;
     MAX_MIN_LIMIT(&car_task.speed_set,MIN_SPEED,MAX_SPEED);
     Serial.print(car_task.speed_set);
-    Serial.print(encoderPos);
-    Serial.print('\n');
     delay(200);
     LCD_task_speed();
   }
-  can_change_task = false;  
+  Serial.print("\nSPeed");
+  Serial.print(car_task.speed_set);
+  delay(500);
+  can_change_task = false;
+  //encoderPos = 0;
   
-  encoderPos = 0;
   
   while(can_change_task == false)
   {
@@ -305,19 +297,20 @@ void task_select(void)
       car_task.target = (float)encoder_out/10.0;
       //MAX_MIN_LIMIT(&car_task.target,TASK_BC_MIN_DISTANCE,TASK_BC_MAX_DISTANCE);
     }*/
-    
-    Serial.print(encoder_out);
+    Serial.print(car_task.target);
+    //Serial.print(encoder_out);
     delay(200);
     LCD_task_target();
   }
+  delay(500);
+  Serial.print("\ntarget");
+  Serial.print(car_task.target);
   can_change_task = false;
-  Serial.print("ok1");
-  while(can_change_task == false)
+  /*while(can_change_task == false)
   {
-    delay(10);
-    continue;
-  }
-  Serial.print("ok");
+    delay(100);
+  }*/
+  Serial.print("\nok");
   car_task.sta = 1; 
   LCD_task_status();
     
@@ -325,19 +318,23 @@ void task_select(void)
 
 void ECD_READ()
 {
-  if (digitalRead(ECD_READ_CLOCK) == digitalRead(encoder0PinB))
+  //interrupts();
+  
+  if(digitalRead(encoder0PinB)==1)
   {
-  encoderPos--;
+    encoderPos--;
   }
   else
   {
-  encoderPos++;
+    encoderPos++;
   }
+  Serial.print((int)encoderPos);
   encoder_out = encoderPos/2;
 }
 
 void task_change(void)
 {
+  interrupts();
   can_change_task = true;
   Serial.print("out");
 }
@@ -350,6 +347,7 @@ inline void Init_time2(int period)
 
 void Timer2ISR(void)
 {
+  interrupts();
   LED_STA = !LED_STA;
   digitalWrite(LED_PIN_OUT,LED_STA);
 }

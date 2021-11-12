@@ -16,11 +16,12 @@
 #define encoder0PinB        11
 #define Direction_BUTTON    12
 
-//#define ECD_IN              A0
+
+
+//#define ECD_IN            A0
 #define TASK_SEL_BOTTON     A1
 #define LED_PIN_OUT         A2
 #define MICRO_READ_PIN      A7
-
 
 //OUTPUT ROW AND COLOUM NUMBER
 #define LCD_TASK_ROW  0
@@ -100,6 +101,7 @@ int turn_value1 = 543;
 int turn_value2 = 475;
 
 int motor_offset[4] = {0,0,-4,-5};
+int motor_offset_A[4] = {0,-2,0,-2};
 /******************************************************************/
 bool LED_STA = 0;
 
@@ -119,8 +121,6 @@ void setup() {
   pinMode(d7,OUTPUT);
 
   pinMode(LED_PIN_OUT,OUTPUT);
-
-  pinMode(BUZZER_OUT,OUTPUT);
   
   //pinMode(ECD_IN,INPUT);
   pinMode(encoder0PinB,INPUT_PULLUP);
@@ -136,6 +136,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(NEXT_TASK_SELECT),task_change,FALLING);
 
   Serial.begin(9600);
+//  buzzer_board.begin(19200);
+  
   Wire.begin();
   
 }
@@ -144,49 +146,34 @@ void loop() {
   
   lcd.setCursor(0,0);
   lcd.print("Wait Task select");
-  /*while(analogRead(MICRO_READ_PIN) < 400)
+  while(analogRead(MICRO_READ_PIN) < 400)
   {
     continue;
-  }*/
+  }
   task_select();
   can_change_task = false;
-
-/*
-  car_task.num = 2;
-  car_task.dir = 1;
-  car_task.speed_set = 60;
-  car_task.target = 1;
-  car_task.sta = 1;*/
 
 Serial.print("ok\n");
   
   if(car_task.num == 0)
   {
+    tone(BUZZER_OUT,TASKA_FREQ,1000);
     task_A_mission();
-    tone(BUZZER_OUT,TASKA_FREQ,10000);
   }
   else if(car_task.num == 1)
   {
+    tone(BUZZER_OUT,TASKB_FREQ,1000);
     task_B_mission();
-    tone(BUZZER_OUT,TASKB_FREQ,10000);
   }
   else if(car_task.num == 2)
   {
+    tone(BUZZER_OUT,TASKC_FREQ,1000);
     task_C_mission();
-    tone(BUZZER_OUT,TASKC_FREQ,10000);
   }
-  noTone(BUZZER_OUT);
   while(1)
   {
   }
-  
-  
-  while(can_change_task == false)
-  {
-    continue;
-    tone(BUZZER_OUT,TASKA_FREQ,200);
-  }
-    
+   
 }
 
 inline void LCD_task_Init(void)

@@ -16,11 +16,12 @@
 #define encoder0PinB        11
 #define Direction_BUTTON    12
 
-#define ECD_IN              A0
+
+
+//#define ECD_IN            A0
 #define TASK_SEL_BOTTON     A1
 #define LED_PIN_OUT         A2
 #define MICRO_READ_PIN      A7
-
 
 //OUTPUT ROW AND COLOUM NUMBER
 #define LCD_TASK_ROW  0
@@ -60,7 +61,7 @@
         }  
 
 /************************car related******************/
-#define ONE_METER (1452)
+#define ONE_METER (1800)
 /******************************************************/
 
 bool can_change_task = false;
@@ -96,9 +97,11 @@ long unsigned int encoder2Value = 0;
 long unsigned int encoder3Value = 0;
 long unsigned int encoder4Value = 0;
 
-int turn_value = 400;
+int turn_value1 = 543;
+int turn_value2 = 475;
 
 int motor_offset[4] = {0,0,-4,-5};
+int motor_offset_A[4] = {0,-2,0,-2};
 /******************************************************************/
 bool LED_STA = 0;
 
@@ -117,10 +120,10 @@ void setup() {
   pinMode(d6,OUTPUT);
   pinMode(d7,OUTPUT);
 
-  pinMode(BUZZER_OUT,OUTPUT);
+  pinMode(LED_PIN_OUT,OUTPUT);
   
   //pinMode(ECD_IN,INPUT);
-  pinMode(encoder0PinB,INPUT);
+  pinMode(encoder0PinB,INPUT_PULLUP);
   pinMode(MICRO_READ_PIN,INPUT);
   
   pinMode(TASK_SEL_BOTTON,INPUT_PULLUP);
@@ -133,10 +136,14 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(NEXT_TASK_SELECT),task_change,FALLING);
 
   Serial.begin(9600);
+//  buzzer_board.begin(19200);
+  
+  Wire.begin();
   
 }
 
 void loop() {
+  
   lcd.setCursor(0,0);
   lcd.print("Wait Task select");
   while(analogRead(MICRO_READ_PIN) < 400)
@@ -146,29 +153,27 @@ void loop() {
   task_select();
   can_change_task = false;
 
+Serial.print("ok\n");
+  
   if(car_task.num == 0)
   {
+    tone(BUZZER_OUT,TASKA_FREQ,1000);
     task_A_mission();
-    tone(BUZZER_OUT,TASKA_FREQ,10000);
   }
   else if(car_task.num == 1)
   {
+    tone(BUZZER_OUT,TASKB_FREQ,1000);
     task_B_mission();
-    tone(BUZZER_OUT,TASKB_FREQ,10000);
   }
   else if(car_task.num == 2)
   {
+    tone(BUZZER_OUT,TASKC_FREQ,1000);
     task_C_mission();
-    tone(BUZZER_OUT,TASKC_FREQ,10000);
   }
-  noTone(BUZZER_OUT);
-  
-  while(can_change_task == false)
+  while(1)
   {
-    continue;
-    tone(BUZZER_OUT,TASKA_FREQ,200);
   }
-    
+   
 }
 
 inline void LCD_task_Init(void)
@@ -230,33 +235,36 @@ void task_select(void)
     delay(100);
   }
   Serial.print("task");
-  
+  Serial.print(car_task.num);
+
+  delay(500);
   can_change_task = false;
   
   while(can_change_task == false)
   {
     car_task.dir = digitalRead(Direction_BUTTON);
     LCD_task_direction();
-    Serial.print(encoderPos);
   }
-  can_change_task = false;
-  Serial.print("direct");
-
+  Serial.print("\ndirect");
+  Serial.print(car_task.dir);
+  delay(500);
   encoderPos = 0;
+  can_change_task = false;
   
   while(can_change_task == false)
   {
     car_task.speed_set = encoder_out + 50;
     MAX_MIN_LIMIT(&car_task.speed_set,MIN_SPEED,MAX_SPEED);
     Serial.print(car_task.speed_set);
-    Serial.print(encoderPos);
-    Serial.print('\n');
     delay(200);
     LCD_task_speed();
   }
-  can_change_task = false;  
-  
+  Serial.print("\nSPeed");
+  Serial.print(car_task.speed_set);
+  delay(500);
+  can_change_task = false;
   encoderPos = 0;
+  
   
   while(can_change_task == false)
   {
@@ -270,19 +278,20 @@ void task_select(void)
       car_task.target = (float)encoder_out/10.0;
       //MAX_MIN_LIMIT(&car_task.target,TASK_BC_MIN_DISTANCE,TASK_BC_MAX_DISTANCE);
     }*/
-    
-    Serial.print(encoder_out);
+    Serial.print(car_task.target);
+    //Serial.print(encoder_out);
     delay(200);
     LCD_task_target();
   }
+  delay(500);
+  Serial.print("\ntarget");
+  Serial.print(car_task.target);
   can_change_task = false;
-  Serial.print("ok1");
-  while(can_change_task == false)
+  /*while(can_change_task == false)
   {
-    delay(10);
-    continue;
-  }
-  Serial.print("ok");
+    delay(100);
+  }*/
+  Serial.print("\nok");
   car_task.sta = 1; 
   LCD_task_status();
     
@@ -348,6 +357,8 @@ void readEncoder1(void)
 
 void task_A_mission(void)
 {
+  Serial.print("taskA_begin");
+  
   delay(TASK_START_TIME);
   
   Init_time2(TASK_A_LED_PERIOD);
@@ -356,6 +367,9 @@ void task_A_mission(void)
   long unsigned int target1_in = 0;
 
   readEncoder1();
+  int turn_value;
+  if(car_task.dir == 0)turn_value = turn_value1;
+  else if(car_task.dir ==1)turn_value = turn_value2;
   
   target1 = encoder1Value + turn_value * 4 * car_task.target;
   target1_in = encoder1Value - turn_value * 4 * car_task.target;
@@ -428,39 +442,8 @@ void task_C_mission(void)
   }
   Wire.endTransmission();
 
-  long unsigned int target1 = 0;
-  long unsigned int target1_in = 0;
-
-  readEncoder1();
-  
-  target1 = encoder1Value + (int)(ONE_METER * car_task.target);
-  target1_in = encoder1Value - (int)(ONE_METER * car_task.target);
-  
-
-  Wire.beginTransmission(42);
-  Wire.write("sa");
-  for(int i=0;i<=3;i++)
-  {
-    Wire.write(car_task.speed_set + motor_offset[i]);
-    Wire.write(0);
-  }
-  Wire.endTransmission();
-  
-
-  while ((encoder1Value < target1) && (encoder1Value > target1_in))
-  {
-    readEncoder1();
-    //Serial.println("Encoder 1 read text!");  // Send some text to the PC
-    //Serial.println(encoder1Value);  // Send some text to the PC
-  }
+  go_straight(car_task.target);
   //Stop all the motors
-  Wire.beginTransmission(42);
-  Wire.write("ha");
-  Wire.endTransmission();
-  delay(10);
-  Wire.beginTransmission(42);
-  Wire.write("daffff");
-  Wire.endTransmission();
 
   MsTimer2::stop();
 }
@@ -471,7 +454,10 @@ void turn_90(void)//only for task B
   long unsigned int target1_in = 0;
 
   readEncoder1();
-  
+
+  int turn_value;
+  if(car_task.dir == 0)turn_value = turn_value1;
+  else if(car_task.dir ==1)turn_value = turn_value2;
   target1 = encoder1Value + turn_value;
   target1_in = encoder1Value - turn_value;
   
@@ -512,9 +498,12 @@ void turn_90(void)//only for task B
 void go_straight(float distance)
 {
   long unsigned int target1 = 0;
+  long unsigned int target1_in = 0;
   
   readEncoder1();
   target1 = encoder1Value + (int)(ONE_METER * distance);
+  target1_in = encoder1Value - (int)(ONE_METER * distance);
+  
   
   Wire.beginTransmission(42);
   Wire.write("sa");
@@ -525,7 +514,7 @@ void go_straight(float distance)
   }
   Wire.endTransmission();
 
-  while(encoder1Value < target1)
+  while((encoder1Value < target1) && (encoder1Value > target1_in))
   {
     readEncoder1();
   }
