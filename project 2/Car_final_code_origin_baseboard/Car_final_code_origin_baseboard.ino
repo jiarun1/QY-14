@@ -146,19 +146,19 @@ void loop() {
   lcd.setCursor(0,0);
   lcd.print("Wait Task select");
 
-  /*
+  
   while(analogRead(MICRO_READ_PIN) < 400)
   {
     continue;
   }
   task_select();
-  can_change_task = false;*/
-
+  can_change_task = false;
+/*
   car_task.num = 0;
   car_task.dir = 1;
   car_task.speed_set = 50;
   car_task.target = 1;
-  
+  */
   if(car_task.num == 0)
   {
     //tone(BUZZER_OUT,TASKA_FREQ,1000);
@@ -273,7 +273,7 @@ void task_select(void)
   while(can_change_task == false)
   {
     car_task.target = (float)encoder_out/10.0; 
- /*   if(car_task.num == 0)
+ /*  if(car_task.num == 0)
     {
       car_task.target = (float)encoder_out/10.0; 
     }
@@ -393,6 +393,17 @@ void task_A_mission(void)
     Wire.write(car_task.speed_set);
     Wire.write(0);
   }
+  for(int i = 0;i<=3;i++)
+  {
+    Wire.write(turn_value%256);
+    turn_value/=256;
+    Wire.write(turn_value%256);
+    turn_value/=256;
+    Wire.write(turn_value%256);
+    turn_value/=256;
+    Wire.write(turn_value%256);
+    turn_value/=256;
+  }
   Wire.endTransmission();
 
   while ((encoder1Value < target1) && (encoder1Value > target1_in))
@@ -465,6 +476,9 @@ void turn_90(void)//only for task B
   else if(car_task.dir ==1)turn_value = turn_value2;
   target1 = encoder1Value + turn_value;
   target1_in = encoder1Value - turn_value;
+
+  int target_turn[4] = {0};
+  
   
   Wire.beginTransmission(42);
   if(car_task.dir == 0)
@@ -480,6 +494,17 @@ void turn_90(void)//only for task B
   {
     Wire.write(50);
     Wire.write(0);
+  }
+  for(int i = 0;i<=3;i++)
+  {
+    Wire.write(turn_value%256);
+    turn_value/=256;
+    Wire.write(turn_value%256);
+    turn_value/=256;
+    Wire.write(turn_value%256);
+    turn_value/=256;
+    Wire.write(turn_value%256);
+    turn_value/=256;
   }
   Wire.endTransmission();
   

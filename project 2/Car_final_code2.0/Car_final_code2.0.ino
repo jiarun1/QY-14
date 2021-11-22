@@ -143,35 +143,31 @@ void setup() {
 }
 
 void loop() {
+  
   lcd.setCursor(0,0);
   lcd.print("Wait Task select");
-
-  /*
   while(analogRead(MICRO_READ_PIN) < 400)
   {
     continue;
   }
   task_select();
-  can_change_task = false;*/
+  can_change_task = false;
 
-  car_task.num = 0;
-  car_task.dir = 1;
-  car_task.speed_set = 50;
-  car_task.target = 1;
+Serial.print("ok\n");
   
   if(car_task.num == 0)
   {
-    //tone(BUZZER_OUT,TASKA_FREQ,1000);
+    tone(BUZZER_OUT,TASKA_FREQ,1000);
     task_A_mission();
   }
   else if(car_task.num == 1)
   {
-    //tone(BUZZER_OUT,TASKB_FREQ,1000);
+    tone(BUZZER_OUT,TASKB_FREQ,1000);
     task_B_mission();
   }
   else if(car_task.num == 2)
   {
-    //tone(BUZZER_OUT,TASKC_FREQ,1000);
+    tone(BUZZER_OUT,TASKC_FREQ,1000);
     task_C_mission();
   }
   while(1)
@@ -369,10 +365,9 @@ void task_A_mission(void)
   
   long unsigned int target1 = 0;
   long unsigned int target1_in = 0;
-  int turn_value;
-  
+
   readEncoder1();
-  
+  int turn_value;
   if(car_task.dir == 0)turn_value = turn_value1;
   else if(car_task.dir ==1)turn_value = turn_value2;
   
@@ -398,8 +393,8 @@ void task_A_mission(void)
   while ((encoder1Value < target1) && (encoder1Value > target1_in))
   {
     readEncoder1();
-    Serial.println("Encoder 1 read text!");  // Send some text to the PC
-    Serial.println(encoder1Value);  // Send some text to the PC
+    //Serial.println("Encoder 1 read text!");  // Send some text to the PC
+    //Serial.println(encoder1Value);  // Send some text to the PC
   }
     //Stop all the motors
     Wire.beginTransmission(42);
