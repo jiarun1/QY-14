@@ -1,0 +1,4 @@
+/home/jiarun/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/213.6777.58/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/jiarun/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/213.6777.58/bin/ninja/linux/ninja -G Ninja "/home/jiarun/My Program/Vehicle"
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/jiarun/My Program/Vehicle/cmake-build-debug
