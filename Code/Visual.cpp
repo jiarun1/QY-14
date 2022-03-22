@@ -110,6 +110,8 @@ static void VisualInit() {
     }
 }
 
+
+
 int SquareDetect()
 {
     inRange(VisualData.HSVFrame,Scalar(VisualData.HRange[Pink].Low,

@@ -1,0 +1,5 @@
+# ninja log v5
+0	2819	1647871378422859902	CMakeFiles/Vehicle.dir/main.cpp.o	fdd2096190c90a16
+0	2820	1647871378422859902	CMakeFiles/Vehicle.dir/Code/Visual.cpp.o	9237b2fb79bc968
+0	2856	1647871378458859051	CMakeFiles/Vehicle.dir/Code/TemplateMatch.cpp.o	6fabdbea593478f8
+2856	3571	1647871379170842212	Vehicle	6ec652e6e9957f69

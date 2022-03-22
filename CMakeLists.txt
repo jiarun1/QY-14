@@ -3,8 +3,9 @@ project(Vehicle)
 
 set(SOURCES
         main.cpp
-        cmake-build-debug/Visual.cpp
-        cmake-build-debug/Visual.h)
+        Code/Visual.cpp
+        Code/Visual.h
+        Code/TemplateMatch.cpp Code/TemplateMatch.h)
 
 find_package(OpenCV 4 REQUIRED)
 
